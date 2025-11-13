@@ -178,11 +178,15 @@ function App() {
           confidence: confidence
         });
 
-        // Unity 로직과 동일하게 처리
-        if (id === 2) {
-          console.log('🎯 제스처 감지! 클릭 시도...');
-          simulateMouseClick();
+        // ID에 따른 동작 처리
+        if (id === 0) {
+          console.log('🦘 ID 0 감지! 한번 클릭!');
+          simulateMouseClick(); // 한번 클릭
+        } else if (id === 1) {
+          console.log('🦘🦘 ID 1 감지! 더블클릭!');
+          simulateDoubleClick(); // 더블클릭
         }
+        // 나머지 ID는 아무 동작 안 함 (달리기 유지)
       }
     }
     else if (msg.head.cmd === MessageCommand.DETECTION) {
@@ -213,6 +217,15 @@ function App() {
           h: h,
           confidence: confidence
         });
+
+        // Detection도 동일하게 처리
+        if (id === 0) {
+          console.log('🦘 ID 0 감지! 한번 클릭!');
+          simulateMouseClick();
+        } else if (id === 1) {
+          console.log('🦘🦘 ID 1 감지! 더블클릭!');
+          simulateDoubleClick();
+        }
       }
     }
   };
@@ -324,6 +337,43 @@ function App() {
 
     } catch (error) {
       console.error('클릭 시뮬레이션 오류:', error);
+    }
+  };
+
+  // 🖱️🖱️ 더블클릭 이벤트
+  const simulateDoubleClick = () => {
+    try {
+      if (!iframeRef.current) return;
+
+      const iframeDoc = iframeRef.current.contentDocument ||
+        iframeRef.current.contentWindow.document;
+      if (!iframeDoc) return;
+
+      const canvas = iframeDoc.getElementById('c2canvas');
+      if (!canvas) return;
+
+      console.log('Canvas 찾음! 더블클릭 이벤트 발생...');
+
+      const rect = canvas.getBoundingClientRect();
+      const x = rect.width / 2;
+      const y = rect.height / 2;
+
+      // 더블클릭 이벤트 직접 발생
+      const dblClickEvent = new MouseEvent('dblclick', {
+        bubbles: true,
+        cancelable: true,
+        view: iframeRef.current.contentWindow,
+        button: 0,
+        detail: 2, // 클릭 횟수
+        clientX: x,
+        clientY: y,
+        screenX: x,
+        screenY: y
+      });
+      canvas.dispatchEvent(dblClickEvent);
+
+    } catch (error) {
+      console.error('더블클릭 시뮬레이션 오류:', error);
     }
   };
 
@@ -451,7 +501,7 @@ function App() {
         fontSize: '16px'
       }}>
         <p>💡 바이너리 프로토콜 방식 (Unity와 동일)</p>
-        <p>🎯 제스처 ID가 2이면 자동 점프!</p>
+        <p>🖱️ ID 0 = 클릭 | 🖱️🖱️ ID 1 = 더블클릭 | 🏃 나머지 = 달리기</p>
         {isConnected && <p style={{ color: '#4CAF50' }}>✅ 아두이노 연결됨</p>}
       </div>
 
@@ -573,9 +623,9 @@ function App() {
                   {parsedDataLog.map((log, index) => (
                     <div key={index} style={{
                       padding: '10px',
-                      background: log.id === 2 ? '#C8E6C9' : '#f9f9f9',
+                      background: log.id === 0 || log.id === 1 ? '#C8E6C9' : '#f9f9f9',
                       marginBottom: '8px',
-                      borderLeft: log.id === 2 ? '4px solid #4CAF50' : '4px solid #ddd',
+                      borderLeft: log.id === 0 || log.id === 1 ? '4px solid #4CAF50' : '4px solid #ddd',
                       borderRadius: '4px'
                     }}>
                       <div style={{ color: '#666', fontSize: '11px', marginBottom: '5px' }}>
@@ -583,6 +633,8 @@ function App() {
                       </div>
                       <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
                         {log.type === 'CLASSIFICATION' ? '🎯 제스처 인식' : '📍 객체 감지'}
+                        {log.id === 0 && ' → 🦘 한번 점프!'}
+                        {log.id === 1 && ' → 🦘🦘 두번 점프!'}
                       </div>
                       {log.type === 'CLASSIFICATION' && (
                         <div>
